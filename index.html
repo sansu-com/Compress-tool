@@ -1,197 +1,110 @@
-<!doctype html>
-
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>PDF Compressor — CompressMyFile</title>
-<meta name="description" content="Client-side PDF compressor — choose quality and download compressed PDF. Files processed in browser." />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PDF Compressor - Sansu</title>
 <style>
-  :root{--bg:#f5f7fb;--card:#fff;--accent:#0b74d1;--muted:#6b7280}
-  *{box-sizing:border-box}
-  body{margin:0;font-family:Inter,system-ui,Arial,sans-serif;background:var(--bg);color:#0f172a}
-  .wrap{max-width:980px;margin:26px auto;padding:18px}
-  .card{background:var(--card);padding:16px;border-radius:12px;box-shadow:0 8px 30px rgba(12,24,40,0.06)}
-  h1{margin:0;font-size:20px}
-  p.lead{color:var(--muted);margin:8px 0 14px}
-  .drop{border:2px dashed #e6eef9;padding:18px;border-radius:10px;text-align:center;cursor:pointer;background:linear-gradient(180deg,#fff,#fbfeff)}
-  .drop small{display:block;margin-top:8px;color:var(--muted);font-size:13px}
-  .controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
-  select,input[type=number],.btn{padding:10px;border-radius:8px;border:1px solid #e8eef6;background:#fff}
-  .btn{cursor:pointer;background:linear-gradient(90deg,var(--accent),#0a5fb0);color:#fff;border:0;font-weight:700}
-  .stats{margin-top:12px;color:var(--muted);font-size:14px}
-  .progress{height:12px;background:#eef6ff;border-radius:8px;overflow:hidden;margin-top:12px}
-  .bar{height:100%;width:0;background:linear-gradient(90deg,var(--accent),#3bb0ff)}
-  footer{margin-top:18px;text-align:center;color:var(--muted);font-size:13px}
-  @media (max-width:720px){.controls{flex-direction:column}.right{width:100%}}
+    body {
+        font-family: Arial, sans-serif;
+        background: #f5f6fa;
+        text-align: center;
+        padding: 20px;
+    }
+    h1 {
+        color: #2f3640;
+    }
+    .upload-box {
+        background: white;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        max-width: 400px;
+        margin: auto;
+    }
+    input[type=file] {
+        margin: 15px 0;
+    }
+    select, button {
+        padding: 10px;
+        margin-top: 10px;
+        border-radius: 8px;
+        border: none;
+        cursor: pointer;
+    }
+    button {
+        background: #0984e3;
+        color: white;
+        font-size: 16px;
+    }
+    button:hover {
+        background: #74b9ff;
+    }
 </style>
+<script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
 </head>
 <body>
-  <div class="wrap">
-    <div class="card">
-      <h1>PDF Compressor</h1>
-      <p class="lead">Compress PDF files in your browser. Choose a compression level — pages will be rendered as images and rebuilt into a smaller PDF. Files never leave your device.</p><div id="dropzone" class="drop" tabindex="0">
-    <strong id="dzText">Tap or drop a PDF file here</strong>
-    <small>Recommended for scanned or image-heavy PDFs. Multi-page PDFs may take time on mobile.</small>
-    <input id="fileInput" type="file" accept="application/pdf" style="display:none">
-  </div>
 
-  <div style="margin-top:12px" class="controls">
-    <label style="display:inline-flex;align-items:center;gap:8px">
-      <span style="font-size:13px;color:var(--muted)">Compression:</span>
-      <select id="preset">
-        <option value="medium">Medium (balanced)</option>
-        <option value="high">High (smaller, lower quality)</option>
-        <option value="low">Low (higher quality)</option>
-        <option value="custom">Custom %</option>
-      </select>
-    </label>
-
-    <label id="customLbl" style="display:none;align-items:center;font-size:13px;color:var(--muted)">
-      <span style="margin-right:8px">Quality %:</span>
-      <input id="customPct" type="number" min="5" max="100" value="60" style="width:80px">
-    </label>
-
-    <label style="display:inline-flex;align-items:center;gap:8px">
-      <span style="font-size:13px;color:var(--muted)">Downsample scale</span>
-      <select id="scale">
-        <option value="0.9">90%</option>
-        <option value="0.8" selected>80%</option>
-        <option value="0.7">70%</option>
-        <option value="0.6">60%</option>
-      </select>
-    </label>
-
-    <button class="btn" id="compressBtn">Compress</button>
-  </div>
-
-  <div class="progress" id="progress" style="display:none"><div class="bar" id="bar"></div></div>
-  <div class="stats" id="stats">No file selected.</div>
-  <a id="downloadLink" style="display:none;margin-top:12px;" class="btn"></a>
-
-  <p style="margin-top:12px;color:var(--muted);font-size:13px">Note: This method rasterizes PDF pages into images and rebuilds a PDF. Searchable text will not be preserved. Large PDFs may be slow.</p>
+<h1>PDF Compressor</h1>
+<div class="upload-box">
+    <input type="file" id="pdfFile" accept="application/pdf"><br>
+    <label for="quality">Select Quality:</label>
+    <select id="quality">
+        <option value="0.7">Medium (70%)</option>
+        <option value="0.5">Low (50%)</option>
+        <option value="0.3">Very Low (30%)</option>
+    </select><br>
+    <button onclick="compressPDF()">Compress PDF</button>
+    <p id="status"></p>
 </div>
 
-<footer>© CompressMyFile — Processed in your browser</footer>
+<script>
+async function compressPDF() {
+    const fileInput = document.getElementById('pdfFile');
+    const quality = parseFloat(document.getElementById('quality').value);
+    const status = document.getElementById('status');
 
-  </div><script>
-// Simple client-side PDF compressor using pdf.js + jsPDF
-const dropzone = document.getElementById('dropzone');
-const fileInput = document.getElementById('fileInput');
-const dzText = document.getElementById('dzText');
-const stats = document.getElementById('stats');
-const compressBtn = document.getElementById('compressBtn');
-const preset = document.getElementById('preset');
-const customLbl = document.getElementById('customLbl');
-const customPct = document.getElementById('customPct');
-const scaleSel = document.getElementById('scale');
-const progress = document.getElementById('progress');
-const bar = document.getElementById('bar');
-const downloadLink = document.getElementById('downloadLink');
+    if (!fileInput.files.length) {
+        alert('Please select a PDF file first.');
+        return;
+    }
 
-let currentFile = null;
+    const file = fileInput.files[0];
+    status.textContent = `Original size: ${(file.size / 1024).toFixed(2)} KB... Compressing...`;
 
-// drag & click
-dropzone.addEventListener('click', ()=> fileInput.click());
-fileInput.addEventListener('change', e=> { if(e.target.files[0]) handleFile(e.target.files[0]); });
+    const reader = new FileReader();
+    reader.onload = async function(e) {
+        const pdfBytes = new Uint8Array(e.target.result);
 
-dropzone.addEventListener('dragover', e=>{ e.preventDefault(); dropzone.style.borderColor='#cde7ff'; });
-dropzone.addEventListener('dragleave', e=>{ e.preventDefault(); dropzone.style.borderColor=''; });
-dropzone.addEventListener('drop', e=>{ e.preventDefault(); if(e.dataTransfer.files && e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]); });
+        try {
+            const pdfDoc = await PDFLib.PDFDocument.load(pdfBytes);
 
-preset.addEventListener('change', ()=>{ customLbl.style.display = preset.value === 'custom' ? 'inline-flex' : 'none'; });
+            const pages = pdfDoc.getPages();
+            for (const page of pages) {
+                const { width, height } = page.getSize();
+                page.setSize(width * quality, height * quality);
+            }
 
-function fmt(n){ if(n<1024) return n+' B'; if(n<1024*1024) return (n/1024).toFixed(1)+' KB'; return (n/1024/1024).toFixed(2)+' MB'; }
+            const compressedBytes = await pdfDoc.save();
+            const blob = new Blob([compressedBytes], { type: 'application/pdf' });
+            const url = URL.createObjectURL(blob);
 
-function handleFile(file){
-  if(file.type !== 'application/pdf'){ alert('Please select a PDF file'); return; }
-  currentFile = file;
-  dzText.textContent = file.name;
-  stats.textContent = `Selected: ${fmt(file.size)} — pages will be rendered (may take time on mobile)`;
-  downloadLink.style.display='none';
+            status.textContent += ` → Compressed size: ${(blob.size / 1024).toFixed(2)} KB`;
+
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'compressed.pdf';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+        } catch (err) {
+            console.error(err);
+            alert('Error compressing PDF. The file might be encrypted or not supported.');
+        }
+    };
+    reader.readAsArrayBuffer(file);
 }
+</script>
 
-// dynamic libs loader
-let libsLoaded = false;
-async function ensureLibs(){
-  if(libsLoaded) return;
-  await loadScript('https://unpkg.com/pdfjs-dist@3.11.116/build/pdf.min.js');
-  try{ pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://unpkg.com/pdfjs-dist@3.11.116/build/pdf.worker.min.js'; }catch(e){}
-  await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
-  libsLoaded = true;
-}
-function loadScript(src){ return new Promise((res,rej)=>{ const s=document.createElement('script'); s.src=src; s.onload=res; s.onerror=rej; document.head.appendChild(s); }); }
-
-async function compressPdf(file){
-  await ensureLibs();
-  const arrayBuffer = await file.arrayBuffer();
-  const pdfDoc = await pdfjsLib.getDocument({data:arrayBuffer}).promise;
-  const pages = pdfDoc.numPages;
-
-  // quality mapping: we will convert canvas to JPEG with quality
-  let jpegQuality = 0.75; // default
-  const sel = preset.value;
-  if(sel === 'high') jpegQuality = 0.5;
-  else if(sel === 'low') jpegQuality = 0.9;
-  else if(sel === 'medium') jpegQuality = 0.75;
-  else if(sel === 'custom') jpegQuality = Math.min(1, Math.max(0.05, Number(customPct.value)/100));
-
-  const scale = Number(scaleSel.value) || 0.8;
-  const { jsPDF } = window.jspdf;
-  const outPdf = new jsPDF({unit:'pt',format:'a4'});
-
-  for(let i=1;i<=pages;i++){
-    showProgress(Math.round((i-1)/pages*80)+5, `Rendering page ${i}/${pages}...`);
-    const page = await pdfDoc.getPage(i);
-    const vp = page.getViewport({scale});
-    const canvas = document.createElement('canvas');
-    canvas.width = Math.ceil(vp.width);
-    canvas.height = Math.ceil(vp.height);
-    const ctx = canvas.getContext('2d');
-    await page.render({canvasContext:ctx, viewport:vp}).promise;
-
-    // convert to JPEG with chosen quality
-    const dataUrl = canvas.toDataURL('image/jpeg', jpegQuality);
-    const imgProps = outPdf.getImageProperties(dataUrl);
-    const pdfW = outPdf.internal.pageSize.getWidth();
-    const pdfH = outPdf.internal.pageSize.getHeight();
-    const ratio = Math.min(pdfW / imgProps.width, pdfH / imgProps.height);
-    const w = imgProps.width * ratio;
-    const h = imgProps.height * ratio;
-    const x = (pdfW - w) / 2;
-    const y = (pdfH - h) / 2;
-
-    if(i > 1) outPdf.addPage();
-    outPdf.addImage(dataUrl, 'JPEG', x, y, w, h);
-    await new Promise(r => setTimeout(r,60)); // allow UI updates
-  }
-
-  showProgress(95, 'Finalizing...');
-  const blob = outPdf.output('blob');
-  return blob;
-}
-
-function showProgress(pct,text){ progress.style.display='block'; bar.style.width = pct+'%'; if(text) stats.textContent = text; }
-
-compressBtn.addEventListener('click', async ()=>{
-  if(!currentFile) return alert('Choose a PDF first');
-  compressBtn.disabled = true; showProgress(3,'Starting...');
-  try{
-    const out = await compressPdf(currentFile);
-    showProgress(100,'Done');
-    downloadLink.href = URL.createObjectURL(out);
-    downloadLink.download = currentFile.name.replace(/\.pdf$/i,'') + '-compressed.pdf';
-    downloadLink.style.display = 'inline-block';
-    downloadLink.textContent = 'Download Compressed PDF';
-    stats.textContent = `Before: ${fmt(currentFile.size)} · After: ${fmt(out.size)} · Saved: ${((1 - out.size/currentFile.size)*100).toFixed(1)}%`;
-  }catch(err){ console.error(err); alert('Error: '+(err.message||err)); stats.textContent = 'Error during compression'; }
-  finally{ compressBtn.disabled = false; setTimeout(()=> progress.style.display='none',800); }
-});
-
-// accessibility: allow paste
-window.addEventListener('paste', (e)=>{
-  const f = e.clipboardData && e.clipboardData.files && e.clipboardData.files[0];
-  if(f && f.type === 'application/pdf') handleFile(f);
-});
-</script></body>
+</body>
 </html>
