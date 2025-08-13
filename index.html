@@ -1,312 +1,97 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>PDF Compressor — No Brand (Client-side)</title>
-<meta name="description" content="Client-side PDF compressor — compress to target size in the browser. No third-party branding." />
+<meta charset="UTF-8">
+<title>PDF Compressor - Custom Size</title>
 <style>
-  :root{
-    --bg:#f5f7fb; --card:#fff; --accent:#2bb673; --muted:#6b7280; --blue:#0b74d1;
-  }
-  *{box-sizing:border-box}
-  body{margin:0;font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial;background:var(--bg); color:#07202b}
-  .wrap{max-width:980px;margin:18px auto;padding:14px}
-  .ad-space{max-width:980px;margin:10px auto;border-radius:8px;border:2px dashed #e1e6ef;background:#fbfdff;min-height:90px;display:flex;align-items:center;justify-content:center;color:#9aa7b6}
-  .card{background:var(--card);padding:16px;border-radius:12px;box-shadow:0 10px 30px rgba(12,24,40,0.06)}
-  h1{margin:0;font-size:20px}
-  p.lead{color:var(--muted);margin:6px 0 12px;font-size:14px}
-  .row{display:flex;gap:12px;flex-wrap:wrap;margin-top:12px}
-  .col-left{flex:1;min-width:260px}
-  .col-right{width:320px;min-width:220px}
-  .drop{border:2px dashed #e6eef9;padding:16px;border-radius:10px;text-align:center;cursor:pointer;background:linear-gradient(180deg,#fff,#fbfeff)}
-  .controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
-  select,input[type=number],button{padding:10px;border-radius:8px;border:1px solid #e6eef9;background:#fff;font-size:14px}
-  button{cursor:pointer}
-  .btn-primary{background:linear-gradient(90deg,var(--accent),#39c285);color:#fff;border:0;font-weight:700}
-  .btn-disabled{background:#cbd5db;color:#6b7280;border:0}
-  .progress{height:12px;background:#eef6f2;border-radius:10px;overflow:hidden;margin-top:12px}
-  .bar{height:100%;width:0%;background:linear-gradient(90deg,var(--accent),#3dbf98)}
-  .info{margin-top:10px;color:var(--muted);font-size:13px}
-  .download{display:none;margin-top:12px;padding:10px 14px;border-radius:8px;text-decoration:none;color:#fff;background:linear-gradient(90deg,var(--blue),#0a6bd0);font-weight:700}
-  .small{font-size:13px;color:var(--muted)}
-  .loader{display:inline-block;width:18px;height:18px;border-radius:50%;background:linear-gradient(90deg,var(--accent),#3dbf98);animation:spin 1s linear infinite;margin-left:8px;vertical-align:middle}
-  @keyframes spin{0%{transform:scale(1)}50%{transform:scale(0.6)}100%{transform:scale(1)}}
-  @media (max-width:760px){ .col-right{width:100%}.row{flex-direction:column} }
+    body { font-family: Arial, sans-serif; background: #f7f7f7; text-align: center; padding: 20px; }
+    .container { background: white; padding: 20px; border-radius: 8px; max-width: 500px; margin: auto; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    .ad-space { width: 300px; height: 250px; background: #e0e0e0; margin: 10px auto; display: flex; align-items: center; justify-content: center; color: #666; font-size: 14px; }
+    #loading { display: none; font-weight: bold; color: #007BFF; margin-top: 10px; }
+    button { padding: 10px 20px; background: #007BFF; color: white; border: none; border-radius: 5px; cursor: pointer; }
+    button:hover { background: #0056b3; }
+    input[type=number] { width: 100px; padding: 5px; margin: 5px; }
 </style>
 </head>
 <body>
-  <div class="wrap">
-    <!-- Top Ad Placeholder -->
-    <div id="topAd" class="ad-space">[Top Ad Placeholder — paste Adsterra code here later]</div>
 
-    <div class="card">
-      <h1>PDF Compressor (Client-side)</h1>
-      <p class="lead">Compress PDFs entirely in the browser — no uploads, no branding. Choose a target size and the tool will try to reach it by downsampling and adjusting image quality.</p>
+<!-- Top Banner Ad Space -->
+<div class="ad-space">300×250 Banner Ad</div>
 
-      <div class="row">
-        <div class="col-left">
-          <div id="dropzone" class="drop" tabindex="0">
-            <strong id="dzText">Click or drop a PDF here</strong>
-            <div class="small" style="margin-top:6px">Recommended for scanned or image-heavy PDFs. Text PDFs will be rasterized (searchable text lost).</div>
-            <input id="fileInput" type="file" accept="application/pdf" style="display:none">
-          </div>
+<div class="container">
+    <h2>Compress Your PDF</h2>
+    <input type="file" id="pdfInput" accept="application/pdf"><br><br>
+    <label>Target Size (KB): </label><input type="number" id="sizeKB" min="0" placeholder="e.g. 500"><br>
+    <label>Target Size (MB): </label><input type="number" id="sizeMB" min="0" placeholder="e.g. 2"><br><br>
+    <button id="compressBtn">Compress PDF</button>
+    <p id="loading">Please wait, compressing PDF...</p>
+    <a id="downloadLink" style="display:none;" download="compressed.pdf">
+        <button>Download Compressed PDF</button>
+    </a>
+</div>
 
-          <div class="controls" style="margin-top:12px">
-            <label class="small" style="display:flex;flex-direction:column">
-              Target size
-              <select id="targetSelect">
-                <option value="512">500 KB</option>
-                <option value="1024">1 MB</option>
-                <option value="2048">2 MB</option>
-                <option value="5120">5 MB</option>
-                <option value="custom">Custom (KB)</option>
-              </select>
-            </label>
+<!-- Bottom Banner Ad Space -->
+<div class="ad-space">300×250 Banner Ad</div>
 
-            <label id="customWrap" class="small" style="display:none;flex-direction:column">
-              Custom size (KB)
-              <input id="customKb" type="number" min="50" step="10" value="1000" style="width:120px">
-            </label>
-
-            <label class="small" style="display:flex;flex-direction:column">
-              Downsample % (page render scale)
-              <select id="scaleSelect">
-                <option value="1">100%</option>
-                <option value="0.9">90%</option>
-                <option value="0.8" selected>80%</option>
-                <option value="0.7">70%</option>
-                <option value="0.6">60%</option>
-              </select>
-            </label>
-          </div>
-
-          <div style="margin-top:12px">
-            <button id="compressBtn" class="btn-primary">Compress PDF</button>
-            <span id="busy" style="display:none"><span class="loader"></span><span class="small" style="margin-left:8px;">Processing...</span></span>
-            <div class="progress" id="progress" style="display:none"><div id="bar" class="bar"></div></div>
-            <div class="info" id="status">No file selected.</div>
-            <a id="downloadLink" class="download" href="#" download>Download Compressed PDF</a>
-          </div>
-        </div>
-
-        <div class="col-right">
-          <div style="background:var(--card);padding:12px;border-radius:10px;border:1px solid #eef4fb">
-            <h3 style="margin:0 0 8px 0">Preview & Stats</h3>
-            <div id="preview" style="min-height:160px;display:flex;align-items:center;justify-content:center;border-radius:8px;border:1px dashed #eef4fb;padding:8px;background:#fbfeff">
-              <span class="small">No file selected</span>
-            </div>
-            <div id="stats" class="small" style="margin-top:10px"></div>
-          </div>
-
-          <div style="margin-top:12px;background:var(--card);padding:12px;border-radius:10px;border:1px solid #eef4fb">
-            <h4 style="margin:0 0 8px 0">Tips</h4>
-            <ul class="small" style="padding-left:18px;margin:0;color:var(--muted)">
-              <li>Choose lower target size for stronger compression.</li>
-              <li>Downsample % reduces page resolution — lower = smaller file.</li>
-              <li>Large multi-page PDFs will take longer on phones.</li>
-            </ul>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Bottom Ad Placeholder -->
-    <div id="bottomAd" class="ad-space">[Bottom Ad Placeholder — paste Adsterra code here later]</div>
-  </div>
-
+<script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
 <script>
-/* ---------- Dynamic loaders ---------- */
-function loadScript(src){ return new Promise((res,rej)=>{ const s=document.createElement('script'); s.src=src; s.onload=res; s.onerror=rej; document.head.appendChild(s); }); }
+document.getElementById('compressBtn').addEventListener('click', async function(event) {
+    event.preventDefault();
 
-/* ---------- Elements ---------- */
-const dropzone = document.getElementById('dropzone');
-const fileInput = document.getElementById('fileInput');
-const dzText = document.getElementById('dzText');
-const compressBtn = document.getElementById('compressBtn');
-const progress = document.getElementById('progress');
-const bar = document.getElementById('bar');
-const busy = document.getElementById('busy');
-const status = document.getElementById('status');
-const preview = document.getElementById('preview');
-const stats = document.getElementById('stats');
-const downloadLink = document.getElementById('downloadLink');
-const targetSelect = document.getElementById('targetSelect');
-const customWrap = document.getElementById('customWrap');
-const customKb = document.getElementById('customKb');
-const scaleSelect = document.getElementById('scaleSelect');
+    const fileInput = document.getElementById('pdfInput');
+    const loading = document.getElementById('loading');
+    const downloadLink = document.getElementById('downloadLink');
 
-let currentFile = null;
-let libsLoaded = false;
+    const sizeKB = parseFloat(document.getElementById('sizeKB').value) || 0;
+    const sizeMB = parseFloat(document.getElementById('sizeMB').value) || 0;
 
-/* ---------- UI behavior ---------- */
-dropzone.addEventListener('click', ()=> fileInput.click());
-fileInput.addEventListener('change', e => { if(e.target.files[0]) loadFile(e.target.files[0]); });
-dropzone.addEventListener('dragover', e=>{ e.preventDefault(); dropzone.style.borderColor='#cde7ff'; });
-dropzone.addEventListener('dragleave', e=>{ e.preventDefault(); dropzone.style.borderColor=''; });
-dropzone.addEventListener('drop', e=>{ e.preventDefault(); if(e.dataTransfer.files && e.dataTransfer.files[0]) loadFile(e.dataTransfer.files[0]); });
-
-targetSelect.addEventListener('change', ()=> {
-  if(targetSelect.value === 'custom'){ customWrap.style.display='flex'; } else { customWrap.style.display='none'; }
-});
-
-/* ---------- Helpers ---------- */
-function fmtBytes(n){
-  if(n === undefined) return '';
-  if(n < 1024) return n + ' B';
-  if(n < 1024*1024) return (n/1024).toFixed(1) + ' KB';
-  return (n/1024/1024).toFixed(2) + ' MB';
-}
-function setProgress(p,txt){
-  progress.style.display = p >= 0 ? 'block' : 'none';
-  bar.style.width = Math.max(0,Math.min(100,p)) + '%';
-  if(txt) status.textContent = txt;
-}
-
-/* ---------- Load libs when needed ---------- */
-async function ensureLibs(){
-  if(libsLoaded) return;
-  // pdf.js and jspdf
-  await loadScript('https://unpkg.com/pdfjs-dist@3.11.116/build/pdf.min.js');
-  try { pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://unpkg.com/pdfjs-dist@3.11.116/build/pdf.worker.min.js'; } catch(e){}
-  await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
-  libsLoaded = true;
-}
-
-/* ---------- File handling ---------- */
-function loadFile(file){
-  if(file.type !== 'application/pdf'){ alert('Please select a PDF file'); return; }
-  currentFile = file;
-  dzText.textContent = file.name;
-  status.textContent = `Selected: ${fmtBytes(file.size)}`;
-  preview.innerHTML = `<div class="small">PDF selected • ${fmtBytes(file.size)}</div>`;
-  stats.textContent = '';
-  downloadLink.style.display = 'none';
-}
-
-/* ---------- Main algorithm ---------- */
-/* Strategy:
-   1) Render each page to canvas at chosen scale.
-   2) For a guessed JPEG quality, build a PDF using jsPDF where each page is the image data (JPEG).
-   3) Measure produced blob size.
-   4) Use binary search on JPEG quality (0.2..0.95) to approach target size (iterate across overall PDF).
-   Note: For performance we render pages once and keep canvas images; we may re-encode with different quality.
-*/
-
-async function renderPagesToCanvases(pdfBytes, scale){
-  const pdf = await pdfjsLib.getDocument({data:pdfBytes}).promise;
-  const pages = pdf.numPages;
-  const canvases = [];
-  for(let i=1;i<=pages;i++){
-    const page = await pdf.getPage(i);
-    const vp = page.getViewport({scale});
-    const canvas = document.createElement('canvas');
-    canvas.width = Math.ceil(vp.width);
-    canvas.height = Math.ceil(vp.height);
-    const ctx = canvas.getContext('2d');
-    await page.render({canvasContext:ctx, viewport:vp}).promise;
-    canvases.push(canvas);
-    const pct = Math.round((i/pages)*40);
-    setProgress(pct, `Rendered page ${i}/${pages}...`);
-    await new Promise(r=>setTimeout(r,20));
-  }
-  return canvases;
-}
-
-async function buildPdfFromCanvases(canvases, jpegQuality){
-  // create jsPDF doc and add pages from canvas (use JPEG)
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({unit:'pt',format:'a4'});
-  for(let i=0;i<canvases.length;i++){
-    const c = canvases[i];
-    // convert canvas to JPEG dataURL with quality
-    const dataUrl = c.toDataURL('image/jpeg', jpegQuality);
-    const imgProps = doc.getImageProperties(dataUrl);
-    const pdfW = doc.internal.pageSize.getWidth();
-    const pdfH = doc.internal.pageSize.getHeight();
-    const ratio = Math.min(pdfW / imgProps.width, pdfH / imgProps.height);
-    const w = imgProps.width * ratio;
-    const h = imgProps.height * ratio;
-    const x = (pdfW - w) / 2;
-    const y = (pdfH - h) / 2;
-    if(i > 0) doc.addPage();
-    doc.addImage(dataUrl, 'JPEG', x, y, w, h);
-    // small yield
-    await new Promise(r=>setTimeout(r,8));
-  }
-  // final blob
-  const blob = doc.output('blob');
-  return blob;
-}
-
-async function compressToTarget(pdfArrayBuffer, targetBytes, scale){
-  // render canvases once
-  const canvases = await renderPagesToCanvases(pdfArrayBuffer, scale);
-
-  // binary search quality between [minQ,maxQ]
-  let minQ = 0.20, maxQ = 0.95;
-  let best = {blob:null, diff:Infinity, q:null};
-  const maxIterations = 8;
-
-  for(let iter=0; iter<maxIterations; iter++){
-    const q = (minQ + maxQ) / 2;
-    setProgress(40 + Math.round((iter/maxIterations)*40), `Encoding with quality ${(q*100).toFixed(0)}% (iter ${iter+1}/${maxIterations})...`);
-    const blob = await buildPdfFromCanvases(canvases, q);
-    const size = blob.size;
-    const diff = Math.abs(size - targetBytes);
-    if(diff < best.diff){ best = {blob, diff, q, size}; }
-    // adjust search
-    if(size > targetBytes){ // produced too large -> reduce quality
-      maxQ = q;
-    } else { // produced smaller than target -> increase quality to improve quality
-      minQ = q;
+    if (!fileInput.files.length) {
+        alert("Please select a PDF file.");
+        return;
     }
-    // early exit if within 5% of target
-    if(Math.abs(size - targetBytes) / targetBytes < 0.05) break;
-  }
-  // return best result
-  return best;
-}
+    if (sizeKB <= 0 && sizeMB <= 0) {
+        alert("Please enter a target size in KB or MB.");
+        return;
+    }
 
-/* ---------- Click handler ---------- */
-compressBtn.addEventListener('click', async ()=>{
-  if(!currentFile) { alert('Please choose a PDF first.'); return; }
-  try{
-    compressBtn.disabled = true;
-    busy.style.display = 'inline-block';
-    setProgress(0, 'Reading file...');
-    const arrayBuffer = await currentFile.arrayBuffer();
-    await ensureLibs();
-    const scale = parseFloat(scaleSelect.value) || 0.8;
-    // determine target bytes
-    let targetKb;
-    if(targetSelect.value === 'custom'){ targetKb = Math.max(50, Number(customKb.value || 1000)); }
-    else targetKb = Number(targetSelect.value);
-    const targetBytes = targetKb * 1024;
-    status.textContent = `Original size: ${fmtBytes(currentFile.size)} • Target: ${fmtBytes(targetBytes)}`;
+    const targetBytes = (sizeKB * 1024) + (sizeMB * 1024 * 1024);
 
-    // render and find best quality
-    const best = await compressToTarget(arrayBuffer, targetBytes, scale);
-    if(!best.blob){ throw new Error('Compression failed'); }
+    loading.style.display = "block";
+    downloadLink.style.display = "none";
 
-    // show results
-    setProgress(100, 'Finalizing...');
-    downloadLink.href = URL.createObjectURL(best.blob);
-    downloadLink.download = currentFile.name.replace(/\.pdf$/i,'') + '-compressed.pdf';
-    downloadLink.style.display = 'inline-block';
-    status.textContent = `Original: ${fmtBytes(currentFile.size)} • Compressed: ${fmtBytes(best.size)} • Quality used: ${(best.q*100).toFixed(0)}% • Saved: ${((1 - best.size/currentFile.size)*100).toFixed(1)}%`;
+    const file = fileInput.files[0];
+    let arrayBuffer = await file.arrayBuffer();
 
-    stats.textContent = `Pages processed. Quality ${(best.q*100).toFixed(0)}% chosen (closest to target).`;
-  }catch(err){
-    console.error(err);
-    alert('Compression error: ' + (err.message || err));
-    status.textContent = 'Compression failed.';
-  }finally{
-    compressBtn.disabled = false;
-    busy.style.display = 'none';
-    setTimeout(()=> setProgress(-1), 800);
-  }
+    let pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
+    let compressionFactor = 0.9;
+
+    let compressedBytes;
+    let blob;
+    let attempt = 0;
+
+    do {
+        attempt++;
+        const pages = pdfDoc.getPages();
+        pages.forEach(page => {
+            page.scaleContent(compressionFactor, compressionFactor);
+        });
+        compressedBytes = await pdfDoc.save({ useObjectStreams: true });
+        blob = new Blob([compressedBytes], { type: 'application/pdf' });
+
+        if (blob.size > targetBytes && compressionFactor > 0.5) {
+            compressionFactor -= 0.05;
+            pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer); // reload original for next attempt
+        } else {
+            break;
+        }
+    } while (blob.size > targetBytes && attempt < 10);
+
+    const url = URL.createObjectURL(blob);
+    downloadLink.href = url;
+    downloadLink.style.display = "inline-block";
+    loading.style.display = "none";
 });
 </script>
+
 </body>
 </html>
